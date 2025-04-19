@@ -1,128 +1,60 @@
 'use strict';
 
-// src/modules/Game.class.js
-export class Game {
-  constructor(initialState) {
-    this.board = initialState || Array(4).fill().map(() => Array(4).fill(0));
-    this.score = 0;
-    this.status = 'idle'; // 'playing', 'won', 'game-over'
-    this.addNewTile();
-  }
+import { Game } from './modules/Game.class.js';
 
-  getState() {
-    return this.board;
-  }
+const game = new Game();
+const boardEl = document.querySelector('.game-field');
+const scoreEl = document.querySelector('.score-value');
+const statusEl = document.querySelector('.game-status');
+const buttonEl = document.querySelector('.control-button');
 
-  getScore() {
-    return this.score;
-  }
+function updateUI() {
+  // Atualizar tabuleiro
+  game.getState().forEach((row, i) => {
+    row.forEach((value, j) => {
+      const cell = boardEl.children[i * 4 + j];
+      cell.textContent = value || '';
+      cell.className = `field-cell${value ? ` field-cell--${value}` : ''}`;
+    });
+  });
 
-  getStatus() {
-    return this.status;
-  }
+  // Atualizar score e status
+  scoreEl.textContent = game.getScore();
+  statusEl.textContent = {
+    'idle': 'Press Start to Play',
+    'playing': '',
+    'won': 'Winner! Congrats! You did it!',
+    'game-over': 'Game Over! No more moves!'
+  }[game.getStatus()];
 
-  addNewTile() {
-    const emptyCells = [];
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        if (this.board[i][j] === 0) emptyCells.push([i, j]);
-      }
-    }
-    
-    if (emptyCells.length > 0) {
-      const [i, j] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      this.board[i][j] = Math.random() < 0.9 ? 2 : 4;
-    }
-  }
-
-  move(direction) {
-    let moved = false;
-    const newBoard = Array(4).fill().map(() => Array(4).fill(0));
-    const oldBoard = JSON.stringify(this.board);
-
-    // Implementação genérica do movimento
-    for (let i = 0; i < 4; i++) {
-      let row = [];
-      switch(direction) {
-        case 'left': row = this.board[i]; break;
-        case 'right': row = [...this.board[i]].reverse(); break;
-        case 'up': row = this.board.map(r => r[i]); break;
-        case 'down': row = this.board.map(r => r[i]).reverse(); break;
-      }
-
-      // Processamento da linha/coluna
-      const processed = this.processLine(row);
-      
-      // Reconstrução do board
-      for (let j = 0; j < 4; j++) {
-        switch(direction) {
-          case 'left': newBoard[i][j] = processed[j]; break;
-          case 'right': newBoard[i][3 - j] = processed[j]; break;
-          case 'up': newBoard[j][i] = processed[j]; break;
-          case 'down': newBoard[3 - j][i] = processed[j]; break;
-        }
-      }
-    }
-
-    moved = JSON.stringify(newBoard) !== oldBoard;
-    if (moved) {
-      this.board = newBoard;
-      this.addNewTile();
-      this.checkGameState();
-    }
-    return moved;
-  }
-
-  processLine(line) {
-    let arr = line.filter(x => x !== 0);
-    let score = 0;
-    
-    for (let i = 0; i < arr.length - 1; i++) {
-      if (arr[i] === arr[i + 1]) {
-        arr[i] *= 2;
-        score += arr[i];
-        arr.splice(i + 1, 1);
-      }
-    }
-
-    this.score += score;
-    return [...arr, ...Array(4 - arr.length).fill(0)];
-  }
-
-  checkGameState() {
-    // Verificar vitória
-    if (this.board.some(row => row.includes(2048))) {
-      this.status = 'won';
-      return;
-    }
-
-    // Verificar game over
-    const hasMoves = this.board.some((row, i) => 
-      row.some((cell, j) => 
-        cell === 0 ||
-        (j < 3 && cell === row[j + 1]) ||
-        (i < 3 && cell === this.board[i + 1][j])
-      )
-    );
-    
-    this.status = hasMoves ? 'playing' : 'game-over';
-  }
-
-  moveLeft() { return this.move('left'); }
-  moveRight() { return this.move('right'); }
-  moveUp() { return this.move('up'); }
-  moveDown() { return this.move('down'); }
-
-  start() {
-    if (this.status === 'idle') {
-      this.status = 'playing';
-    }
-  }
-
-  restart() {
-    this.board = Array(4).fill().map(() => Array(4).fill(0));
-    this.score = 0;
-    this.status = 'playing';
-    this.addNewTile();
-  }
+  // Atualizar botão
+  buttonEl.textContent = game.getStatus() === 'idle' ? 'Start' : 'Restart';
+  buttonEl.className = `control-button ${game.getStatus() === 'idle' ? 'start' : 'restart'}`;
 }
+
+document.addEventListener('keydown', e => {
+  if (game.getStatus() !== 'playing') return;
+
+  const keyHandler = {
+    ArrowLeft: () => game.moveLeft(),
+    ArrowRight: () => game.moveRight(),
+    ArrowUp: () => game.moveUp(),
+    ArrowDown: () => game.moveDown()
+  }[e.key];
+
+  if (keyHandler) {
+    keyHandler() && updateUI();
+  }
+});
+
+buttonEl.addEventListener('click', () => {
+  if (game.getStatus() === 'idle') {
+    game.start();
+  } else {
+    game.restart();
+  }
+  updateUI();
+});
+
+// Inicialização
+updateUI();
