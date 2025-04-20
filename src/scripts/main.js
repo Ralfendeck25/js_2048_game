@@ -1,52 +1,90 @@
-'use strict';
-
 import { Game } from './modules/Game.class.js';
 
+// === Sélection des éléments DOM ===
 const game = new Game();
 const boardEl = document.querySelector('.game-field');
-const scoreEl = document.querySelector('.score-value');
-const statusEl = document.querySelector('.game-status');
-const buttonEl = document.querySelector('.control-button');
+const scoreEl = document.querySelector('.game-score');
+const buttonEl = document.querySelector('.button');
+const messageStart = document.querySelector('.message-start');
+const messageWin = document.querySelector('.message-win');
+const messageLose = document.querySelector('.message-lose');
 
+// === Mise à jour de l'interface ===
 function updateUI() {
-  // Atualizar tabuleiro
-  game.getState().forEach((row, i) => {
+  const state = game.getState();
+  const rows = boardEl.querySelectorAll('tr');
+
+  // Met à jour les cellules du plateau
+  state.forEach((row, i) => {
+    const cells = rows[i].querySelectorAll('td');
+
     row.forEach((value, j) => {
-      const cell = boardEl.children[i * 4 + j];
+      const cell = cells[j];
+
       cell.textContent = value || '';
-      cell.className = `field-cell${value ? ` field-cell--${value}` : ''}`;
+
+      cell.className = 'field-cell';
+
+      cell.setAttribute('data-value', value || '');
+
+      if (value > 0) {
+        cell.classList.add(`field-cell--${value}`);
+        cell.classList.add('animated');
+        setTimeout(() => cell.classList.remove('animated'), 200);
+      }
     });
   });
 
-  // Atualizar score e status
+  // Met à jour le score
   scoreEl.textContent = game.getScore();
-  statusEl.textContent = {
-    'idle': 'Press Start to Play',
-    'playing': '',
-    'won': 'Winner! Congrats! You did it!',
-    'game-over': 'Game Over! No more moves!'
-  }[game.getStatus()];
 
-  // Atualizar botão
-  buttonEl.textContent = game.getStatus() === 'idle' ? 'Start' : 'Restart';
-  buttonEl.className = `control-button ${game.getStatus() === 'idle' ? 'start' : 'restart'}`;
+  // Affiche les bons messages (start, win, lose)
+  const gameStatus = game.getStatus();
+  const messages = {
+    idle: messageStart,
+    win: messageWin,
+    lose: messageLose,
+  };
+
+  Object.entries(messages).forEach(([key, el]) => {
+    el.classList.toggle('hidden', gameStatus !== key);
+  });
+
+  // Met à jour le bouton
+  buttonEl.textContent = gameStatus === 'idle' ? 'Start' : 'Restart';
+  buttonEl.classList.toggle('start', gameStatus === 'idle');
+  buttonEl.classList.toggle('restart', gameStatus !== 'idle');
 }
 
-document.addEventListener('keydown', e => {
-  if (game.getStatus() !== 'playing') return;
+// === Gestion du clavier ===
+function handleKeyPress(e) {
+  const validKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
 
-  const keyHandler = {
+  if (!validKeys.includes(e.key) || game.getStatus() !== 'playing') {
+    return;
+  }
+
+  const moved = {
     ArrowLeft: () => game.moveLeft(),
     ArrowRight: () => game.moveRight(),
     ArrowUp: () => game.moveUp(),
-    ArrowDown: () => game.moveDown()
-  }[e.key];
+    ArrowDown: () => game.moveDown(),
+  }[e.key]();
 
-  if (keyHandler) {
-    keyHandler() && updateUI();
+  if (moved) {
+    updateUI();
+
+    // // Pour le debug
+    // console.log('State:', game.getState());
+
+    // console.log('Status:', game.getStatus());
+
+    // console.log('Score:', game.getScore());
   }
-});
+}
+document.addEventListener('keydown', handleKeyPress);
 
+// === Bouton Start / Restart ===
 buttonEl.addEventListener('click', () => {
   if (game.getStatus() === 'idle') {
     game.start();
@@ -56,5 +94,5 @@ buttonEl.addEventListener('click', () => {
   updateUI();
 });
 
-// Inicialização
+// === Initialisation ===
 updateUI();
