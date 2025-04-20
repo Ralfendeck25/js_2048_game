@@ -17,9 +17,11 @@ body {
   border-radius: 5px;
   color: #776e65;
   box-sizing: border-box;
-  text-align: center;
   vertical-align: center;
   user-select: none;
+  text-align: center;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 
   &--2 {
     background: #eee4da;
@@ -184,4 +186,66 @@ h1 {
 .message-container {
   width: 100%;
   height: 150px;
+}
+
+/* Exemples dynamiques avec data-value */
+.field-cell[data-value='2'] {
+  background-color: #eee4da;
+}
+
+.field-cell[data-value='4'] {
+  background-color: #ede0c8;
+}
+
+.field-cell[data-value='8'] {
+  background-color: #f2b179;
+}
+
+.field-cell[data-value='16'] {
+  background-color: #f59563;
+}
+
+.field-cell[data-value='32'] {
+  background-color: #f67c5f;
+}
+
+.field-cell[data-value='64'] {
+  background-color: #f65e3b;
+}
+
+.field-cell[data-value='128'] {
+  background-color: #edcf72;
+}
+
+.field-cell[data-value='256'] {
+  background-color: #edcc61;
+}
+
+.field-cell[data-value='512'] {
+  background-color: #edc850;
+}
+
+.field-cell[data-value='1024'] {
+  background-color: #edc53f;
+}
+
+.field-cell[data-value='2048'] {
+  background-color: #edc22e;
+}
+
+/* Animation */
+.animated {
+  animation: pop 0.2s ease-in-out;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
